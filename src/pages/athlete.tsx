@@ -1,4 +1,5 @@
 import { postJson } from "@/lib/api";
+import { useActivitiesQuery } from "@/lib/query-builder";
 import { withSessionSsr } from "@/lib/session";
 import type { Athlete } from "@/lib/types";
 import {
@@ -6,11 +7,17 @@ import {
   Center,
   Container,
   Heading,
+  HStack,
   Link,
+  Stat,
+  StatNumber,
   Text,
   VStack,
+  Wrap,
+  WrapItem,
 } from "@chakra-ui/react";
 import Head from "next/head";
+import { useRouter } from "next/router";
 
 type Props = {
   athlete: Athlete;
@@ -18,6 +25,21 @@ type Props = {
 };
 
 export default function Athlete({ athlete, accessToken }: Props) {
+  console.log("athlete", accessToken);
+  const activitiesQuery = useActivitiesQuery(
+    {
+      accessToken,
+      // after: new Date("2023-01-01").getTime(),
+    },
+    { staleTime: Infinity, retry: false }
+  );
+  console.log(activitiesQuery.data);
+  const router = useRouter();
+  const signOut = () => {
+    postJson("/api/sign-out").then(() => {
+      router.push("/");
+    });
+  };
   return (
     <>
       <Head>
@@ -32,15 +54,27 @@ export default function Athlete({ athlete, accessToken }: Props) {
       <main>
         <Center h="100vh">
           <Container>
-            <VStack>
+            <VStack overflowX="hidden">
               <Heading color="orange.500">Strava Insights</Heading>
               <Text color="gray.500">Understand more</Text>
               <Text color="gray.700" fontWeight="bold">
                 {athlete.username}
               </Text>
-              <Button onClick={() => postJson("/api/sign-out")}>
-                Sign out
-              </Button>
+              <Wrap>
+                {activitiesQuery.data?.map((activity) => (
+                  <WrapItem key={activity.id}>
+                    <Stat>
+                      <StatNumber>
+                        {Math.round(activity.distance * 0.000621371 * 100) /
+                          100}
+                        mi
+                      </StatNumber>
+                    </Stat>
+                  </WrapItem>
+                ))}
+              </Wrap>
+
+              <Button onClick={signOut}>Sign out</Button>
             </VStack>
           </Container>
         </Center>

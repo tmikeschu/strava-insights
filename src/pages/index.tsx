@@ -14,7 +14,7 @@ const LOGIN_QUERY_PARAMS = [
   ["redirect_uri", process.env.STRAVA_REDIRECT_URI],
   ["response_type", "code"],
   ["approval_prompt", "force"],
-  ["scope", "read"],
+  ["scope", "activity:read"],
 ]
   .map((keyVal) => keyVal.join("="))
   .join("&");

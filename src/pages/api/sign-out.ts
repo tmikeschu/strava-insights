@@ -11,7 +11,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     access_token: req.session.accessToken,
   });
   req.session.destroy();
-  return res.redirect(307, "/");
+  return res.status(201).send({ ok: true });
 }
 
 export default withSessionApiRoute(handler);

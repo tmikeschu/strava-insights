@@ -26,6 +26,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     grant_type: "authorization_code",
     code: req.query.code,
   });
+  console.log("server", accessToken);
 
   Object.assign(req.session, {
     athlete,
