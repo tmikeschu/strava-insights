@@ -64,7 +64,11 @@ export default function Athlete({ athlete, accessToken }: Props) {
                 {activitiesQuery.data?.map((activity) => (
                   <WrapItem key={activity.id}>
                     <Stat>
-                      <StatNumber>
+                      <StatNumber
+                        transform={`scale(${
+                          (activity.distance * 0.000621371) / 10
+                        })`}
+                      >
                         {Math.round(activity.distance * 0.000621371 * 100) /
                           100}
                         mi
