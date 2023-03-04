@@ -40,8 +40,11 @@ export interface Activity {
   sport_type: string;
   workout_type: number;
   id: number;
+  /** e.g., 2023-03-01T23:04:31Z */
   start_date: string;
+  /** e.g., 2023-03-01T18:04:31Z */
   start_date_local: string;
+  /** (GMT-05:00) America/New_York */
   timezone: string;
   utc_offset: number;
   location_city: null;
