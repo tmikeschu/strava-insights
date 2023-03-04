@@ -1,15 +1,23 @@
 import { postJson } from "@/lib/api";
 import { useActivitiesQuery } from "@/lib/query-builder";
 import { withSessionSsr } from "@/lib/session";
-import type { Athlete } from "@/lib/types";
+import type { Athlete, Activity } from "@/lib/types";
+import { Utils } from "@/lib/utils";
 import {
   Button,
+  Card,
+  CardBody,
   Center,
   Container,
+  FormControl,
+  FormLabel,
   Heading,
   HStack,
+  Input,
   Link,
   Stat,
+  StatHelpText,
+  StatLabel,
   StatNumber,
   Text,
   VStack,
@@ -18,6 +26,7 @@ import {
 } from "@chakra-ui/react";
 import Head from "next/head";
 import { useRouter } from "next/router";
+import React from "react";
 
 type Props = {
   athlete: Athlete;
@@ -25,31 +34,41 @@ type Props = {
 };
 
 export default function Athlete({ athlete, accessToken }: Props) {
-  console.log("athlete", accessToken);
   const activitiesQuery = useActivitiesQuery(
-    {
-      accessToken,
-      // after: new Date("2023-01-01").getTime(),
-    },
+    { accessToken },
     { staleTime: Infinity, retry: false }
   );
-  console.log(activitiesQuery.data);
+
   const router = useRouter();
   const signOut = () => {
     postJson("/api/sign-out").then(() => {
       router.push("/");
     });
   };
+
+  const [nDays, setNDays] = React.useState(7);
+
+  const activitiesGroupedByDay = Utils.groupByDay(activitiesQuery.data ?? []);
+  const activitiesOnDays = Utils.getLastNDays(nDays).map(
+    (day) =>
+      ([day, activitiesGroupedByDay[day.toDateString()] ?? []] ?? [
+        day,
+        [],
+      ]) as [Date, Activity[]]
+  );
+
+  const lastNDaysTotal = Utils.formatMiles(
+    Utils.metersToMiles(
+      activitiesOnDays
+        .flatMap(([, activities]) => activities)
+        .reduce((acc, activity) => acc + activity.distance, 0)
+    )
+  );
+
   return (
     <>
       <Head>
-        <title>Strava Insights</title>
-        <meta
-          name="description"
-          content="Helpful insights on your training data"
-        />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon.ico" />
+        <title>Strava Insights | {athlete.username}</title>
       </Head>
       <main>
         <Center h="100vh">
@@ -60,20 +79,46 @@ export default function Athlete({ athlete, accessToken }: Props) {
               <Text color="gray.700" fontWeight="bold">
                 {athlete.username}
               </Text>
+              <FormControl>
+                <FormLabel>Last N Days</FormLabel>
+                <Input
+                  value={nDays}
+                  onChange={(e) => setNDays(Number(e.target.value))}
+                  type="number"
+                />
+              </FormControl>
+              <Card>
+                <CardBody>
+                  <Stat>
+                    <StatLabel>Last {nDays} days total</StatLabel>
+                    <StatNumber>{lastNDaysTotal}mi</StatNumber>
+                  </Stat>
+                </CardBody>
+              </Card>
               <Wrap>
-                {activitiesQuery.data?.map((activity) => (
-                  <WrapItem key={activity.id}>
-                    <Stat>
-                      <StatNumber
-                        transform={`scale(${
-                          (activity.distance * 0.000621371) / 10
-                        })`}
-                      >
-                        {Math.round(activity.distance * 0.000621371 * 100) /
-                          100}
-                        mi
-                      </StatNumber>
-                    </Stat>
+                {activitiesOnDays.map(([day, activities]) => (
+                  <WrapItem key={day.toDateString()}>
+                    <Card>
+                      <CardBody>
+                        <Stat>
+                          <StatLabel>{day.toDateString()}</StatLabel>
+                          <HStack divider={<StatNumber pr="1">,</StatNumber>}>
+                            {activities.length ? (
+                              activities.map((activity) => (
+                                <StatNumber key={activity.id}>
+                                  {Utils.formatMiles(
+                                    Utils.metersToMiles(activity.distance)
+                                  )}{" "}
+                                  mi
+                                </StatNumber>
+                              ))
+                            ) : (
+                              <StatHelpText>Rest</StatHelpText>
+                            )}
+                          </HStack>
+                        </Stat>
+                      </CardBody>
+                    </Card>
                   </WrapItem>
                 ))}
               </Wrap>
