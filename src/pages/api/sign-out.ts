@@ -7,7 +7,7 @@ import { Router } from "next/router";
 import { postJson } from "@/lib/api";
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
-  await postJson(process.env.STRAVA_DEAUTHORIZE_URI!, {
+  await postJson(process.env.NEXT_PUBLIC_STRAVA_DEAUTHORIZE_URI!, {
     access_token: req.session.accessToken,
   });
   req.session.destroy();

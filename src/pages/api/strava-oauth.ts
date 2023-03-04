@@ -20,12 +20,15 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     access_token: accessToken,
     athlete,
     expires_at: expiresAt,
-  } = await postJson<StravaTokenResponse>(process.env.STRAVA_OAUTH_URL!, {
-    client_id: process.env.STRAVA_CLIENT_ID,
-    client_secret: process.env.STRAVA_CLIENT_SECRET,
-    grant_type: "authorization_code",
-    code: req.query.code,
-  });
+  } = await postJson<StravaTokenResponse>(
+    process.env.NEXT_PUBLIC_STRAVA_OAUTH_URL!,
+    {
+      client_id: process.env.NEXT_PUBLIC_STRAVA_CLIENT_ID,
+      client_secret: process.env.STRAVA_CLIENT_SECRET,
+      grant_type: "authorization_code",
+      code: req.query.code,
+    }
+  );
   console.log("server", accessToken);
 
   Object.assign(req.session, {

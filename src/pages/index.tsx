@@ -10,8 +10,8 @@ import {
 import Head from "next/head";
 
 const LOGIN_QUERY_PARAMS = [
-  ["client_id", process.env.STRAVA_CLIENT_ID],
-  ["redirect_uri", process.env.STRAVA_REDIRECT_URI],
+  ["client_id", process.env.NEXT_PUBLIC_STRAVA_CLIENT_ID],
+  ["redirect_uri", process.env.NEXT_PUBLIC_STRAVA_REDIRECT_URI],
   ["response_type", "code"],
   ["approval_prompt", "force"],
   ["scope", "activity:read"],
