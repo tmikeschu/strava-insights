@@ -19,7 +19,7 @@ const LOGIN_QUERY_PARAMS = [
   .map((keyVal) => keyVal.join("="))
   .join("&");
 
-const LOGIN_URL = `${process.env.STRAVA_AUTH_URL}?${LOGIN_QUERY_PARAMS}`;
+const LOGIN_URL = `${process.env.NEXT_PUBLIC_STRAVA_AUTH_URL}?${LOGIN_QUERY_PARAMS}`;
 
 export default function Home() {
   return (
