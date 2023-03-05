@@ -4,11 +4,13 @@ import { withSessionSsr } from "@/lib/session";
 import type { Athlete, Activity } from "@/lib/types";
 import { Utils } from "@/lib/utils";
 import {
+  Box,
   Button,
   Card,
   CardBody,
   Center,
   Container,
+  Divider,
   FormControl,
   FormLabel,
   Heading,
@@ -71,14 +73,33 @@ export default function Athlete({ athlete, accessToken }: Props) {
         <title>Strava Insights | {athlete.username}</title>
       </Head>
       <main>
-        <Center h="100vh">
+        <Center flex="1" py={{ base: "4" }} overflowX="hidden">
           <Container>
-            <VStack overflowX="hidden">
-              <Heading color="orange.500">Strava Insights</Heading>
-              <Text color="gray.500">Understand more</Text>
-              <Text color="gray.700" fontWeight="bold">
-                {athlete.username}
-              </Text>
+            <VStack alignItems="flex-start" w="full">
+              <HStack w="full" justifyContent="space-between">
+                <VStack alignItems="flex-start" spacing="0">
+                  <Heading
+                    color="orange.500"
+                    fontSize={{ base: "xl", md: "3xl" }}
+                  >
+                    Strava Insights
+                  </Heading>
+                  <Link
+                    color="gray.500"
+                    fontWeight="medium"
+                    fontSize="sm"
+                    isExternal
+                    href={`${process.env.NEXT_PUBLIC_STRAVA_URL}/athletes/${athlete.id}`}
+                  >
+                    {athlete.firstname} {athlete.lastname} ({athlete.username})
+                  </Link>
+                </VStack>
+
+                <Button size="xs" onClick={signOut}>
+                  Sign out
+                </Button>
+              </HStack>
+              <Divider />
               <FormControl>
                 <FormLabel>Last N Days</FormLabel>
                 <Input
@@ -87,22 +108,27 @@ export default function Athlete({ athlete, accessToken }: Props) {
                   type="number"
                 />
               </FormControl>
-              <Card>
-                <CardBody>
-                  <Stat>
-                    <StatLabel>Last {nDays} days total</StatLabel>
-                    <StatNumber>{lastNDaysTotal}mi</StatNumber>
-                  </Stat>
-                </CardBody>
-              </Card>
-              <Wrap>
-                {activitiesOnDays.map(([day, activities]) => (
-                  <WrapItem key={day.toDateString()}>
-                    <Card>
+
+              <Box overflowX="hidden">
+                <HStack py="1" overflowX="auto" pr="4" w="full">
+                  <Card flexShrink={0}>
+                    <CardBody>
+                      <Stat>
+                        <StatLabel>Last {nDays} days total</StatLabel>
+                        <StatNumber>{lastNDaysTotal}mi</StatNumber>
+                      </Stat>
+                    </CardBody>
+                  </Card>
+                  {activitiesOnDays.map(([day, activities]) => (
+                    <Card key={day.toDateString()} flexShrink={0}>
                       <CardBody>
                         <Stat>
                           <StatLabel>{day.toDateString()}</StatLabel>
-                          <HStack divider={<StatNumber pr="1">,</StatNumber>}>
+                          <HStack
+                            spacing="0"
+                            alignItems="flex-start"
+                            divider={<StatNumber pr="1">,</StatNumber>}
+                          >
                             {activities.length ? (
                               activities.map((activity) => (
                                 <StatNumber key={activity.id}>
@@ -113,17 +139,15 @@ export default function Athlete({ athlete, accessToken }: Props) {
                                 </StatNumber>
                               ))
                             ) : (
-                              <StatHelpText>Rest</StatHelpText>
+                              <StatNumber color="gray.400">Rest</StatNumber>
                             )}
                           </HStack>
                         </Stat>
                       </CardBody>
                     </Card>
-                  </WrapItem>
-                ))}
-              </Wrap>
-
-              <Button onClick={signOut}>Sign out</Button>
+                  ))}
+                </HStack>
+              </Box>
             </VStack>
           </Container>
         </Center>
