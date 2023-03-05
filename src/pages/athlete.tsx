@@ -2,7 +2,7 @@ import { postJson } from "@/lib/api";
 import { useActivitiesQuery } from "@/lib/query-builder";
 import { withSessionSsr } from "@/lib/session";
 import type { Athlete, Activity } from "@/lib/types";
-import { Utils } from "@/lib/utils";
+import { Unit, Utils } from "@/lib/utils";
 import {
   Box,
   Button,
@@ -18,13 +18,25 @@ import {
   Input,
   Link,
   Stat,
-  StatHelpText,
   StatLabel,
   StatNumber,
-  Text,
   VStack,
-  Wrap,
-  WrapItem,
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
+  useDisclosure,
+  ModalCloseButton,
+  RadioGroup,
+  Radio,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  IconButton,
+  Text,
 } from "@chakra-ui/react";
 import Head from "next/head";
 import { useRouter } from "next/router";
@@ -49,6 +61,7 @@ export default function Athlete({ athlete, accessToken }: Props) {
   };
 
   const [nDays, setNDays] = React.useState(7);
+  const [unit, setUnit] = React.useState<Unit>("miles");
 
   const activitiesGroupedByDay = Utils.groupByDay(activitiesQuery.data ?? []);
   const activitiesOnDays = Utils.getLastNDays(nDays).map(
@@ -59,13 +72,16 @@ export default function Athlete({ athlete, accessToken }: Props) {
       ]) as [Date, Activity[]]
   );
 
-  const lastNDaysTotal = Utils.formatMiles(
-    Utils.metersToMiles(
+  const fromMeters = unit === "miles" ? Utils.metersToMiles : Utils.metersToKm;
+  const lastNDaysTotal = Utils.roundDistance(
+    fromMeters(
       activitiesOnDays
         .flatMap(([, activities]) => activities)
         .reduce((acc, activity) => acc + activity.distance, 0)
     )
   );
+
+  const disclosure = useDisclosure();
 
   return (
     <>
@@ -95,19 +111,20 @@ export default function Athlete({ athlete, accessToken }: Props) {
                   </Link>
                 </VStack>
 
-                <Button size="xs" onClick={signOut}>
-                  Sign out
-                </Button>
+                <Menu>
+                  <MenuButton
+                    as={IconButton}
+                    aria-label="open menu"
+                    icon={<Text>🍔</Text>}
+                  />
+                  <MenuList>
+                    <MenuItem onClick={disclosure.onOpen}>Settings</MenuItem>
+                    <MenuItem onClick={signOut}>Sign Out</MenuItem>
+                  </MenuList>
+                </Menu>
               </HStack>
+
               <Divider />
-              <FormControl>
-                <FormLabel>Last N Days</FormLabel>
-                <Input
-                  value={nDays}
-                  onChange={(e) => setNDays(Number(e.target.value))}
-                  type="number"
-                />
-              </FormControl>
 
               <Box overflowX="hidden">
                 <HStack py="1" overflowX="auto" pr="4" w="full">
@@ -115,7 +132,10 @@ export default function Athlete({ athlete, accessToken }: Props) {
                     <CardBody>
                       <Stat>
                         <StatLabel>Last {nDays} days total</StatLabel>
-                        <StatNumber>{lastNDaysTotal}mi</StatNumber>
+                        <StatNumber>
+                          {lastNDaysTotal}
+                          {unit.slice(0, 2)}
+                        </StatNumber>
                       </Stat>
                     </CardBody>
                   </Card>
@@ -132,10 +152,10 @@ export default function Athlete({ athlete, accessToken }: Props) {
                             {activities.length ? (
                               activities.map((activity) => (
                                 <StatNumber key={activity.id}>
-                                  {Utils.formatMiles(
-                                    Utils.metersToMiles(activity.distance)
+                                  {Utils.roundDistance(
+                                    fromMeters(activity.distance)
                                   )}{" "}
-                                  mi
+                                  {unit.slice(0, 2)}
                                 </StatNumber>
                               ))
                             ) : (
@@ -152,6 +172,42 @@ export default function Athlete({ athlete, accessToken }: Props) {
           </Container>
         </Center>
       </main>
+      <Modal {...disclosure}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Settings</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <VStack alignItems="flex-start" w="full">
+              <FormControl>
+                <FormLabel>Units</FormLabel>
+                <RadioGroup
+                  colorScheme={"orange"}
+                  value={unit}
+                  onChange={(e) => setUnit(e as "miles" | "km")}
+                >
+                  <HStack>
+                    <Radio value="miles">Miles</Radio>
+                    <Radio value="km">Km</Radio>
+                  </HStack>
+                </RadioGroup>
+              </FormControl>
+              <FormControl>
+                <FormLabel>Last N Days</FormLabel>
+                <Input
+                  value={nDays}
+                  onChange={(e) => setNDays(Number(e.target.value))}
+                  type="number"
+                />
+              </FormControl>
+            </VStack>
+          </ModalBody>
+
+          <ModalFooter>
+            <Button onClick={disclosure.onClose}>Done</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </>
   );
 }

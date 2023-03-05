@@ -3,8 +3,14 @@ import { Activity } from "./types";
 
 export const MILES_PER_METER = 0.000621371;
 
+export type Unit = "miles" | "km" | "m";
+
 function metersToMiles(meters: number): number {
   return MILES_PER_METER * meters;
+}
+
+function metersToKm(meters: number): number {
+  return meters / 1000;
 }
 
 const toDecimal =
@@ -33,7 +39,8 @@ const getLastNDays = (n = 7) => {
 
 export const Utils = {
   metersToMiles,
-  formatMiles: toDecimal(2),
+  metersToKm,
+  roundDistance: toDecimal(2),
   groupByDay,
   getLastNDays,
 };
