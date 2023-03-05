@@ -38,7 +38,6 @@ export default function Home() {
           <Container>
             <VStack>
               <Heading color="orange.500">Strava Insights</Heading>
-              <Text color="gray.500">Understand more</Text>
               <Button
                 as={Link}
                 _hover={{ bg: "orange.600", textDecor: "none" }}
