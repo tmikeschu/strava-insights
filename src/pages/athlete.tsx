@@ -89,7 +89,7 @@ export default function Athlete({ athlete, accessToken }: Props) {
         <title>Strava Insights | {athlete.username}</title>
       </Head>
       <main>
-        <Center flex="1" py={{ base: "4" }} overflowX="hidden">
+        <Center flex="1" py={{ base: "4" }}>
           <Container>
             <VStack alignItems="flex-start" w="full">
               <HStack w="full" justifyContent="space-between">
@@ -126,8 +126,8 @@ export default function Athlete({ athlete, accessToken }: Props) {
 
               <Divider />
 
-              <Box overflowX="hidden">
-                <HStack py="1" overflowX="auto" pr="4" w="full">
+              <Box overflowX="hidden" w="full">
+                <HStack py="1" overflowX="auto">
                   <Card flexShrink={0}>
                     <CardBody>
                       <Stat>
