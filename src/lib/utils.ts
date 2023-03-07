@@ -3,6 +3,12 @@ import { Activity } from "./types";
 
 export const MILES_PER_METER = 0.000621371;
 
+const MINUTES_PER_MILE_IN_METERS_PER_SECOND = 26.8224;
+
+function mPerSecToMinPerMile(mPerSec: number): number {
+  return MINUTES_PER_MILE_IN_METERS_PER_SECOND / mPerSec;
+}
+
 export type Unit = "miles" | "km" | "m";
 
 function metersToMiles(meters: number): number {
@@ -43,4 +49,5 @@ export const Utils = {
   roundDistance: toDecimal(2),
   groupByDay,
   getLastNDays,
+  mPerSecToMinPerMile,
 };
