@@ -178,7 +178,7 @@ interface MetricSplit {
   pace_zone: number;
 }
 
-interface ImperialSplit {
+export interface ImperialSplit {
   distance: number;
   elapsed_time: number;
   elevation_difference: number;

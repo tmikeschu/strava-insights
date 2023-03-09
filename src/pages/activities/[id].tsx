@@ -2,7 +2,7 @@ import { postJson } from "@/lib/api";
 import { useActivitiesQuery } from "@/lib/query-builder";
 import { useActivityQuery } from "@/lib/query-builder/get-activity-query";
 import { withSessionSsr } from "@/lib/session";
-import type { Athlete, Activity } from "@/lib/types";
+import type { Athlete, Activity, ImperialSplit } from "@/lib/types";
 import { Unit, Utils } from "@/lib/utils";
 import {
   Box,
@@ -38,6 +38,7 @@ import {
   MenuItem,
   IconButton,
   Text,
+  ButtonGroup,
 } from "@chakra-ui/react";
 import Head from "next/head";
 import { useRouter } from "next/router";
@@ -57,11 +58,39 @@ export default function Activity({ athlete, accessToken }: Props) {
     { accessToken, id: Number(id), include_all_efforts: false },
     { staleTime: Infinity, retry: false }
   );
+  const splits = activityQuery.data?.splits_standard ?? [];
 
   const signOut = () => {
     postJson("/api/sign-out").then(() => {
       router.push("/");
     });
+  };
+
+  const [selectedSplitIds, setSelectedSplitIds] = React.useState<number[]>([]);
+  const toggleSplit = (split: ImperialSplit) => {
+    setSelectedSplitIds((splits) => {
+      if (splits.includes(split.split)) {
+        return splits.filter((s) => s !== split.split);
+      }
+      return [...splits, split.split].sort((a, b) => a - b);
+    });
+  };
+  const selectedSplits =
+    splits.filter((split) => selectedSplitIds.includes(split.split)) ?? [];
+
+  const totalSplitSpeed = selectedSplits.reduce(
+    (acc, split) => acc + split.average_speed,
+    0
+  );
+  const avgSplitSpeed = totalSplitSpeed / selectedSplits.length;
+
+  const formattedAvgSplitSpeed = Utils.formatMeterSpeed(avgSplitSpeed);
+
+  const selectAll = () => {
+    setSelectedSplitIds(splits.map((split) => split.split));
+  };
+  const deselectAll = () => {
+    setSelectedSplitIds([]);
   };
 
   return (
@@ -113,15 +142,28 @@ export default function Activity({ athlete, accessToken }: Props) {
               <Box overflowX="hidden" w="full">
                 <HStack py="1" overflowX="auto">
                   {activityQuery.data?.splits_standard.map((split) => (
-                    <Card key={split.split} flexShrink={0} bg="orange.50">
+                    <Card
+                      key={split.split}
+                      flexShrink={0}
+                      border="1px solid"
+                      transition="all 0.2s"
+                      {...(selectedSplitIds.includes(split.split)
+                        ? {
+                            borderColor: "orange.500",
+                          }
+                        : {
+                            borderColor: "transparent",
+                          })}
+                      bg="orange.50"
+                      role="button"
+                      _hover={{ bg: "orange.100" }}
+                      onClick={() => toggleSplit(split)}
+                    >
                       <CardBody>
                         <Stat>
                           <StatLabel>Split {split.split}</StatLabel>
                           <StatNumber>
-                            {Utils.roundDistance(
-                              Utils.mPerSecToMinPerMile(split.average_speed)
-                            )}
-                            min/mi
+                            {Utils.formatMeterSpeed(split.average_speed)}
                           </StatNumber>
                         </Stat>
                       </CardBody>
@@ -129,6 +171,20 @@ export default function Activity({ athlete, accessToken }: Props) {
                   ))}
                 </HStack>
               </Box>
+
+              <ButtonGroup size="sm" variant="outline" colorScheme="orange">
+                <Button onClick={deselectAll}>Deselect All</Button>
+                <Button onClick={selectAll}>Select All</Button>
+              </ButtonGroup>
+
+              <Card bg="orange.50">
+                <CardBody>
+                  <Stat>
+                    <StatLabel>Splits {selectedSplitIds.join(", ")}</StatLabel>
+                    <StatNumber>{formattedAvgSplitSpeed}</StatNumber>
+                  </Stat>
+                </CardBody>
+              </Card>
             </VStack>
           </Container>
         </Center>

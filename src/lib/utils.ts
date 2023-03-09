@@ -43,6 +43,20 @@ const getLastNDays = (n = 7) => {
   return Array.from({ length: n }, (_, i) => subDays(today, i));
 };
 
+const minToMinSec = (minutesDecimal: number) => {
+  const minutes = Math.floor(minutesDecimal);
+  const seconds = Math.round((minutesDecimal - minutes) * 60);
+  return [minutes.toString(), seconds.toString().padStart(2, "0")];
+};
+const formatMeterSpeed = (speed: number) => {
+  const rounded = Utils.roundDistance(Utils.mPerSecToMinPerMile(speed));
+  const [minutes, seconds] = Number.isNaN(rounded)
+    ? []
+    : Utils.minToMinSec(rounded);
+  const formatted = minutes === undefined ? "-" : `${minutes}:${seconds}/mi`;
+  return formatted;
+};
+
 export const Utils = {
   metersToMiles,
   metersToKm,
@@ -50,4 +64,6 @@ export const Utils = {
   groupByDay,
   getLastNDays,
   mPerSecToMinPerMile,
+  minToMinSec,
+  formatMeterSpeed,
 };
