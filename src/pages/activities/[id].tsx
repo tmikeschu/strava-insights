@@ -42,6 +42,7 @@ import {
 import Head from "next/head";
 import { useRouter } from "next/router";
 import React from "react";
+import NextLink from "next/link";
 
 type Props = {
   athlete: Athlete;
@@ -105,10 +106,14 @@ export default function Activity({ athlete, accessToken }: Props) {
 
               <Divider />
 
+              <Button as={NextLink} href="/athlete" variant="link">
+                Back to athlete
+              </Button>
+
               <Box overflowX="hidden" w="full">
                 <HStack py="1" overflowX="auto">
                   {activityQuery.data?.splits_standard.map((split) => (
-                    <Card key={split.split} flexShrink={0}>
+                    <Card key={split.split} flexShrink={0} bg="orange.50">
                       <CardBody>
                         <Stat>
                           <StatLabel>Split {split.split}</StatLabel>

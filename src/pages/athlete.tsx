@@ -37,10 +37,13 @@ import {
   MenuItem,
   IconButton,
   Text,
+  LinkOverlay,
+  LinkBox,
 } from "@chakra-ui/react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import React from "react";
+import NextLink from "next/link";
 
 type Props = {
   athlete: Athlete;
@@ -64,20 +67,14 @@ export default function Athlete({ athlete, accessToken }: Props) {
   const [unit, setUnit] = React.useState<Unit>("miles");
 
   const activitiesGroupedByDay = Utils.groupByDay(activitiesQuery.data ?? []);
-  const activitiesOnDays = Utils.getLastNDays(nDays).map(
-    (day) =>
-      ([day, activitiesGroupedByDay[day.toDateString()] ?? []] ?? [
-        day,
-        [],
-      ]) as [Date, Activity[]]
+  const latestActivities = Utils.getLastNDays(nDays).flatMap(
+    (day) => activitiesGroupedByDay[day.toDateString()] ?? []
   );
 
   const fromMeters = unit === "miles" ? Utils.metersToMiles : Utils.metersToKm;
   const lastNDaysTotal = Utils.roundDistance(
     fromMeters(
-      activitiesOnDays
-        .flatMap(([, activities]) => activities)
-        .reduce((acc, activity) => acc + activity.distance, 0)
+      latestActivities.reduce((acc, activity) => acc + activity.distance, 0)
     )
   );
 
@@ -128,7 +125,7 @@ export default function Athlete({ athlete, accessToken }: Props) {
 
               <Box overflowX="hidden" w="full">
                 <HStack py="1" overflowX="auto">
-                  <Card flexShrink={0}>
+                  <Card flexShrink={0} bg="orange.50">
                     <CardBody>
                       <Stat>
                         <StatLabel>Last {nDays} days total</StatLabel>
@@ -139,32 +136,41 @@ export default function Athlete({ athlete, accessToken }: Props) {
                       </Stat>
                     </CardBody>
                   </Card>
-                  {activitiesOnDays.map(([day, activities]) => (
-                    <Card key={day.toDateString()} flexShrink={0}>
-                      <CardBody>
-                        <Stat>
-                          <StatLabel>{day.toDateString()}</StatLabel>
-                          <HStack
-                            spacing="0"
-                            alignItems="flex-start"
-                            divider={<StatNumber pr="1">,</StatNumber>}
-                          >
-                            {activities.length ? (
-                              activities.map((activity) => (
-                                <StatNumber key={activity.id}>
-                                  {Utils.roundDistance(
-                                    fromMeters(activity.distance)
-                                  )}{" "}
-                                  {unit.slice(0, 2)}
-                                </StatNumber>
-                              ))
-                            ) : (
-                              <StatNumber color="gray.400">Rest</StatNumber>
-                            )}
-                          </HStack>
-                        </Stat>
-                      </CardBody>
-                    </Card>
+                  {latestActivities.map((activity) => (
+                    <LinkBox key={activity.id} flexShrink={0}>
+                      <Card
+                        flexShrink={0}
+                        bg="orange.50"
+                        _hover={{ bg: "orange.100" }}
+                      >
+                        <CardBody>
+                          <Stat>
+                            <StatLabel>
+                              <LinkOverlay
+                                as={NextLink}
+                                href={`/activities/${activity.id}`}
+                              >
+                                {new Date(
+                                  activity.start_date_local
+                                ).toDateString()}
+                              </LinkOverlay>
+                            </StatLabel>
+                            <HStack
+                              spacing="0"
+                              alignItems="flex-start"
+                              divider={<StatNumber pr="1">,</StatNumber>}
+                            >
+                              <StatNumber key={activity.id}>
+                                {Utils.roundDistance(
+                                  fromMeters(activity.distance)
+                                )}{" "}
+                                {unit.slice(0, 2)}
+                              </StatNumber>
+                            </HStack>
+                          </Stat>
+                        </CardBody>
+                      </Card>
+                    </LinkBox>
                   ))}
                 </HStack>
               </Box>
