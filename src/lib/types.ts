@@ -190,7 +190,7 @@ export interface ImperialSplit {
   pace_zone: number;
 }
 
-interface Lap {
+export interface Lap {
   id: number;
   resource_state: number;
   name: string;

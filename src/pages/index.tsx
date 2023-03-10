@@ -1,12 +1,4 @@
-import {
-  Button,
-  Center,
-  Container,
-  Heading,
-  Link,
-  Text,
-  VStack,
-} from "@chakra-ui/react";
+import { Button, Center, Heading, Link, VStack } from "@chakra-ui/react";
 import Head from "next/head";
 
 const LOGIN_QUERY_PARAMS = [
@@ -26,28 +18,20 @@ export default function Home() {
     <>
       <Head>
         <title>Strava Insights</title>
-        <meta
-          name="description"
-          content="Helpful insights on your training data"
-        />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon.ico" />
       </Head>
       <main>
         <Center h="100vh">
-          <Container>
-            <VStack>
-              <Heading color="orange.500">Strava Insights</Heading>
-              <Button
-                as={Link}
-                _hover={{ bg: "orange.600", textDecor: "none" }}
-                colorScheme={"orange"}
-                href={LOGIN_URL}
-              >
-                Log in with Strava
-              </Button>
-            </VStack>
-          </Container>
+          <VStack>
+            <Heading color="orange.500">Strava Insights</Heading>
+            <Button
+              as={Link}
+              _hover={{ bg: "orange.600", textDecor: "none" }}
+              colorScheme={"orange"}
+              href={LOGIN_URL}
+            >
+              Log in with Strava
+            </Button>
+          </VStack>
         </Center>
       </main>
     </>

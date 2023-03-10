@@ -1,73 +1,55 @@
-import { postJson } from "@/lib/api";
-import { useActivitiesQuery } from "@/lib/query-builder";
 import { useActivityQuery } from "@/lib/query-builder/get-activity-query";
 import { withSessionSsr } from "@/lib/session";
-import type { Athlete, Activity, ImperialSplit } from "@/lib/types";
-import { Unit, Utils } from "@/lib/utils";
+import { Athlete, ImperialSplit, Lap, DetailedActivity } from "@/lib/types";
+import { Utils } from "@/lib/utils";
 import {
   Box,
   Button,
   Card,
   CardBody,
-  Center,
-  Container,
-  Divider,
-  FormControl,
-  FormLabel,
-  Heading,
   HStack,
-  Input,
-  Link,
   Stat,
   StatLabel,
   StatNumber,
   VStack,
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
-  useDisclosure,
-  ModalCloseButton,
+  ButtonGroup,
   RadioGroup,
   Radio,
-  Menu,
-  MenuButton,
-  MenuList,
-  MenuItem,
-  IconButton,
-  Text,
-  ButtonGroup,
+  StatHelpText,
 } from "@chakra-ui/react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import React from "react";
 import NextLink from "next/link";
+import { match } from "ts-pattern";
+import { useAuthedHeaderContext } from "@/components/authed-header/authed-header-context";
 
 type Props = {
   athlete: Athlete;
   accessToken: string;
 };
 
+type SplitType = keyof Pick<
+  DetailedActivity,
+  "splits_standard" | "splits_metric" | "laps"
+>;
+
 export default function Activity({ athlete, accessToken }: Props) {
   const router = useRouter();
   const { id } = router.query;
+
+  const { unit } = useAuthedHeaderContext();
+
+  const [splitType, setSplitType] = React.useState<SplitType>("laps");
 
   const activityQuery = useActivityQuery(
     { accessToken, id: Number(id), include_all_efforts: false },
     { staleTime: Infinity, retry: false }
   );
-  const splits = activityQuery.data?.splits_standard ?? [];
-
-  const signOut = () => {
-    postJson("/api/sign-out").then(() => {
-      router.push("/");
-    });
-  };
+  const splits: (Lap | ImperialSplit)[] = activityQuery.data?.[splitType] ?? [];
 
   const [selectedSplitIds, setSelectedSplitIds] = React.useState<number[]>([]);
-  const toggleSplit = (split: ImperialSplit) => {
+  const toggleSplit = (split: ImperialSplit | Lap) => {
     setSelectedSplitIds((splits) => {
       if (splits.includes(split.split)) {
         return splits.filter((s) => s !== split.split);
@@ -84,7 +66,9 @@ export default function Activity({ athlete, accessToken }: Props) {
   );
   const avgSplitSpeed = totalSplitSpeed / selectedSplits.length;
 
-  const formattedAvgSplitSpeed = Utils.formatMeterSpeed(avgSplitSpeed);
+  const formattedAvgSplitSpeed = Utils.formatMeterSpeed(avgSplitSpeed, {
+    unit,
+  });
 
   const selectAll = () => {
     setSelectedSplitIds(splits.map((split) => split.split));
@@ -99,95 +83,83 @@ export default function Activity({ athlete, accessToken }: Props) {
         <title>Strava Insights | {athlete.username}</title>
       </Head>
       <main>
-        <Center flex="1" py={{ base: "4" }}>
-          <Container>
-            <VStack alignItems="flex-start" w="full">
-              <HStack w="full" justifyContent="space-between">
-                <VStack alignItems="flex-start" spacing="0">
-                  <Heading
-                    color="orange.500"
-                    fontSize={{ base: "xl", md: "3xl" }}
-                  >
-                    Strava Insights
-                  </Heading>
-                  <Link
-                    color="gray.500"
-                    fontWeight="medium"
-                    fontSize="sm"
-                    isExternal
-                    href={`${process.env.NEXT_PUBLIC_STRAVA_URL}/athletes/${athlete.id}`}
-                  >
-                    {athlete.firstname} {athlete.lastname} ({athlete.username})
-                  </Link>
-                </VStack>
+        <VStack alignItems="flex-start">
+          <Button as={NextLink} href="/athlete" variant="link">
+            Back to athlete
+          </Button>
 
-                <Menu>
-                  <MenuButton
-                    as={IconButton}
-                    aria-label="open menu"
-                    icon={<Text>🍔</Text>}
-                  />
-                  <MenuList>
-                    <MenuItem onClick={signOut}>Sign Out</MenuItem>
-                  </MenuList>
-                </Menu>
-              </HStack>
+          <RadioGroup
+            value={splitType}
+            onChange={(value) => setSplitType(value as SplitType)}
+          >
+            <HStack>
+              <Radio value={"laps" satisfies SplitType}>Laps</Radio>
+              <Radio
+                order={unit === "km" ? 1 : 0}
+                value={"splits_standard" satisfies SplitType}
+              >
+                Splits (mile)
+              </Radio>
+              <Radio value={"splits_metric" satisfies SplitType}>
+                Splits (km)
+              </Radio>
+            </HStack>
+          </RadioGroup>
 
-              <Divider />
+          <Box overflowX="hidden" w="full">
+            <HStack py="1" overflowX="auto">
+              {splits.map((split) => (
+                <Card
+                  key={split.split}
+                  flexShrink={0}
+                  border="1px solid"
+                  transition="all 0.2s"
+                  {...(selectedSplitIds.includes(split.split)
+                    ? { borderColor: "orange.500" }
+                    : { borderColor: "transparent" })}
+                  bg="orange.50"
+                  role="button"
+                  _hover={{ bg: "orange.100" }}
+                  onClick={() => toggleSplit(split)}
+                >
+                  <CardBody>
+                    <Stat>
+                      <StatLabel>
+                        {match(splitType)
+                          .with("laps", () => `Lap ${split.split}`)
+                          .with("splits_metric", () => `Km ${split.split}`)
+                          .with("splits_standard", () => `Mile ${split.split}`)
+                          .exhaustive()}
+                      </StatLabel>
+                      <StatNumber>
+                        {Utils.formatMeterSpeed(split.average_speed, { unit })}
+                      </StatNumber>
+                      {splitType === "laps" && (
+                        <StatHelpText>
+                          {Utils.formatMeterDistance(split.distance, { unit })}
+                        </StatHelpText>
+                      )}
+                    </Stat>
+                  </CardBody>
+                </Card>
+              ))}
+            </HStack>
+          </Box>
 
-              <Button as={NextLink} href="/athlete" variant="link">
-                Back to athlete
-              </Button>
+          <ButtonGroup size="sm" variant="outline" colorScheme="orange">
+            <Button onClick={deselectAll}>Deselect All</Button>
+            <Button onClick={selectAll}>Select All</Button>
+          </ButtonGroup>
 
-              <Box overflowX="hidden" w="full">
-                <HStack py="1" overflowX="auto">
-                  {activityQuery.data?.splits_standard.map((split) => (
-                    <Card
-                      key={split.split}
-                      flexShrink={0}
-                      border="1px solid"
-                      transition="all 0.2s"
-                      {...(selectedSplitIds.includes(split.split)
-                        ? {
-                            borderColor: "orange.500",
-                          }
-                        : {
-                            borderColor: "transparent",
-                          })}
-                      bg="orange.50"
-                      role="button"
-                      _hover={{ bg: "orange.100" }}
-                      onClick={() => toggleSplit(split)}
-                    >
-                      <CardBody>
-                        <Stat>
-                          <StatLabel>Split {split.split}</StatLabel>
-                          <StatNumber>
-                            {Utils.formatMeterSpeed(split.average_speed)}
-                          </StatNumber>
-                        </Stat>
-                      </CardBody>
-                    </Card>
-                  ))}
-                </HStack>
-              </Box>
-
-              <ButtonGroup size="sm" variant="outline" colorScheme="orange">
-                <Button onClick={deselectAll}>Deselect All</Button>
-                <Button onClick={selectAll}>Select All</Button>
-              </ButtonGroup>
-
-              <Card bg="orange.50">
-                <CardBody>
-                  <Stat>
-                    <StatLabel>Splits {selectedSplitIds.join(", ")}</StatLabel>
-                    <StatNumber>{formattedAvgSplitSpeed}</StatNumber>
-                  </Stat>
-                </CardBody>
-              </Card>
-            </VStack>
-          </Container>
-        </Center>
+          <Card bg="orange.50">
+            <CardBody>
+              <Stat>
+                <StatLabel>Splits {selectedSplitIds.join(", ")}</StatLabel>
+                <StatNumber>{formattedAvgSplitSpeed}</StatNumber>
+              </Stat>
+            </CardBody>
+          </Card>
+        </VStack>
       </main>
     </>
   );

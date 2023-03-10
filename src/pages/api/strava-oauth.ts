@@ -29,7 +29,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       code: req.query.code,
     }
   );
-  console.log("server", accessToken);
 
   Object.assign(req.session, {
     athlete,
