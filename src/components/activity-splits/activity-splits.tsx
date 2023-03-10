@@ -15,6 +15,8 @@ import {
   RadioGroup,
   Radio,
   StatHelpText,
+  Skeleton,
+  Heading,
 } from "@chakra-ui/react";
 import React from "react";
 import { match } from "ts-pattern";
@@ -35,6 +37,7 @@ export function ActivitySplits({ athlete, accessToken, id }: Props) {
   const { unit } = useAuthedHeaderContext();
 
   const [splitType, setSplitType] = React.useState<SplitType>("laps");
+  const [selectedSplitIds, setSelectedSplitIds] = React.useState<number[]>([]);
 
   const activityQuery = useActivityQuery(
     { accessToken, id: Number(id), include_all_efforts: false },
@@ -42,7 +45,6 @@ export function ActivitySplits({ athlete, accessToken, id }: Props) {
   );
   const splits: (Lap | ImperialSplit)[] = activityQuery.data?.[splitType] ?? [];
 
-  const [selectedSplitIds, setSelectedSplitIds] = React.useState<number[]>([]);
   const toggleSplit = (split: ImperialSplit | Lap) => {
     setSelectedSplitIds((splits) => {
       if (splits.includes(split.split)) {
@@ -75,7 +77,10 @@ export function ActivitySplits({ athlete, accessToken, id }: Props) {
     <VStack alignItems="flex-start" w="full">
       <RadioGroup
         value={splitType}
-        onChange={(value) => setSplitType(value as SplitType)}
+        onChange={(value) => {
+          setSplitType(value as SplitType);
+          deselectAll();
+        }}
       >
         <HStack>
           <Radio value={"laps" satisfies SplitType}>Laps</Radio>
@@ -91,41 +96,61 @@ export function ActivitySplits({ athlete, accessToken, id }: Props) {
 
       <Box overflowX="hidden" w="full">
         <HStack py="1" overflowX="auto">
-          {splits.map((split) => (
-            <Card
-              key={split.split}
-              flexShrink={0}
-              border="1px solid"
-              transition="all 0.2s"
-              {...(selectedSplitIds.includes(split.split)
-                ? { borderColor: "orange.500" }
-                : { borderColor: "transparent" })}
-              bg="orange.50"
-              role="button"
-              _hover={{ bg: "orange.100" }}
-              onClick={() => toggleSplit(split)}
-            >
-              <CardBody>
-                <Stat>
-                  <StatLabel>
-                    {match(splitType)
-                      .with("laps", () => `Lap ${split.split}`)
-                      .with("splits_metric", () => `Km ${split.split}`)
-                      .with("splits_standard", () => `Mile ${split.split}`)
-                      .exhaustive()}
-                  </StatLabel>
-                  <StatNumber>
-                    {Utils.formatMeterSpeed(split.average_speed, { unit })}
-                  </StatNumber>
-                  {splitType === "laps" && (
-                    <StatHelpText>
-                      {Utils.formatMeterDistance(split.distance, { unit })}
-                    </StatHelpText>
-                  )}
-                </Stat>
-              </CardBody>
-            </Card>
-          ))}
+          {activityQuery.isLoading
+            ? Array.from({ length: 4 }, (_, i) => (
+                <Card key={`skeleton:${i}`} bg="gray.50">
+                  <CardBody>
+                    <Stat>
+                      <Skeleton mb="px">
+                        <StatLabel>Load</StatLabel>
+                      </Skeleton>
+                      <Skeleton mb="px">
+                        <StatNumber>Loading</StatNumber>
+                      </Skeleton>
+                      {splitType === "laps" && (
+                        <Skeleton>
+                          <StatHelpText>Loading</StatHelpText>
+                        </Skeleton>
+                      )}
+                    </Stat>
+                  </CardBody>
+                </Card>
+              ))
+            : splits.map((split) => (
+                <Card
+                  key={split.split}
+                  flexShrink={0}
+                  border="1px solid"
+                  transition="all 0.2s"
+                  {...(selectedSplitIds.includes(split.split)
+                    ? { borderColor: "orange.500" }
+                    : { borderColor: "transparent" })}
+                  bg="orange.50"
+                  role="button"
+                  _hover={{ bg: "orange.100" }}
+                  onClick={() => toggleSplit(split)}
+                >
+                  <CardBody>
+                    <Stat>
+                      <StatLabel>
+                        {match(splitType)
+                          .with("laps", () => `Lap ${split.split}`)
+                          .with("splits_metric", () => `Km ${split.split}`)
+                          .with("splits_standard", () => `Mile ${split.split}`)
+                          .exhaustive()}
+                      </StatLabel>
+                      <StatNumber>
+                        {Utils.formatMeterSpeed(split.average_speed, { unit })}
+                      </StatNumber>
+                      {splitType === "laps" && (
+                        <StatHelpText>
+                          {Utils.formatMeterDistance(split.distance, { unit })}
+                        </StatHelpText>
+                      )}
+                    </Stat>
+                  </CardBody>
+                </Card>
+              ))}
         </HStack>
       </Box>
 
@@ -138,7 +163,8 @@ export function ActivitySplits({ athlete, accessToken, id }: Props) {
         <CardBody>
           <Stat>
             <StatLabel>
-              {splitType === "laps" ? "Laps" : "Splits"}{" "}
+              {splitType === "laps" ? "Laps" : "Splits"}
+              {" avg: "}
               {selectedSplitIds.join(", ")}
             </StatLabel>
             <StatNumber>{formattedAvgSplitSpeed}</StatNumber>

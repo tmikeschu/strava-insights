@@ -4,15 +4,19 @@ import { Activity } from "./types";
 
 export const MILES_PER_METER = 0.000621371;
 
+const METERS_PER_KM = 1000;
+
 const MINUTES_PER_MILE_IN_METERS_PER_SECOND = 26.8224;
 
 const MINUTES_PER_KM_IN_METERS_PER_SECOND = 16.6667;
 
 function mPerSecToMinPerMile(mPerSec: number): number {
+  if (mPerSec === 0) return 0;
   return MINUTES_PER_MILE_IN_METERS_PER_SECOND / mPerSec;
 }
 
 function mPerSecToMinPerKm(mPerSec: number): number {
+  if (mPerSec === 0) return 0;
   return MINUTES_PER_KM_IN_METERS_PER_SECOND / mPerSec;
 }
 
@@ -23,7 +27,7 @@ function metersToMiles(meters: number): number {
 }
 
 function metersToKm(meters: number): number {
-  return meters / 1000;
+  return meters / METERS_PER_KM;
 }
 
 const toDecimal =

@@ -12,6 +12,7 @@ import {
   StatNumber,
   Divider,
   VStack,
+  Skeleton,
 } from "@chakra-ui/react";
 import Head from "next/head";
 import React from "react";
@@ -56,54 +57,75 @@ export default function Athlete({ athlete, accessToken }: Props) {
         <VStack alignItems="flex-start">
           <Box overflowX="hidden" w="full">
             <HStack py="1" overflowX="auto">
-              <Card flexShrink={0} bg="orange.50">
-                <CardBody>
-                  <Stat>
-                    <StatLabel>Last {nDays} days total</StatLabel>
-                    <StatNumber>
-                      {lastNDaysTotal}
-                      {unit.slice(0, 2)}
-                    </StatNumber>
-                  </Stat>
-                </CardBody>
-              </Card>
-              {latestActivities.map((activity) => (
-                <Card
-                  role="button"
-                  onClick={() =>
-                    setSelectedActivityId((id) =>
-                      id === activity.id ? null : activity.id
-                    )
-                  }
-                  border="1px solid"
-                  transition="all 0.2s"
-                  {...(selectedActivityId === activity.id
-                    ? { borderColor: "orange.500" }
-                    : { borderColor: "transparent" })}
-                  key={activity.id}
-                  flexShrink={0}
-                  bg="orange.50"
-                  _hover={{ bg: "orange.100" }}
-                >
-                  <CardBody>
-                    <Stat>
-                      <StatLabel>
-                        {new Date(activity.start_date_local).toDateString()}
-                      </StatLabel>
-                      <HStack
-                        spacing="0"
-                        alignItems="flex-start"
-                        divider={<StatNumber pr="1">,</StatNumber>}
-                      >
-                        <StatNumber key={activity.id}>
-                          {Utils.roundDistance(fromMeters(activity.distance))}{" "}
+              {activitiesQuery.isLoading ? (
+                Array.from({ length: 4 }, (_, i) => (
+                  <Card key={`skeleton:${i}`} flexShrink={0} bg="gray.50">
+                    <CardBody>
+                      <Stat>
+                        <Skeleton mb="px">
+                          <StatLabel>{new Date().toDateString()}</StatLabel>
+                        </Skeleton>
+                        <Skeleton>
+                          <StatNumber>0.00</StatNumber>
+                        </Skeleton>
+                      </Stat>
+                    </CardBody>
+                  </Card>
+                ))
+              ) : (
+                <>
+                  <Card flexShrink={0} bg="orange.50">
+                    <CardBody>
+                      <Stat>
+                        <StatLabel>Last {nDays} days total</StatLabel>
+                        <StatNumber>
+                          {lastNDaysTotal}
                           {unit.slice(0, 2)}
                         </StatNumber>
-                      </HStack>
-                    </Stat>
-                  </CardBody>
-                </Card>
-              ))}
+                      </Stat>
+                    </CardBody>
+                  </Card>
+                  {latestActivities.map((activity) => (
+                    <Card
+                      role="button"
+                      onClick={() =>
+                        setSelectedActivityId((id) =>
+                          id === activity.id ? null : activity.id
+                        )
+                      }
+                      border="1px solid"
+                      transition="all 0.2s"
+                      {...(selectedActivityId === activity.id
+                        ? { borderColor: "orange.500" }
+                        : { borderColor: "transparent" })}
+                      key={activity.id}
+                      flexShrink={0}
+                      bg="orange.50"
+                      _hover={{ bg: "orange.100" }}
+                    >
+                      <CardBody>
+                        <Stat>
+                          <StatLabel>
+                            {new Date(activity.start_date_local).toDateString()}
+                          </StatLabel>
+                          <HStack
+                            spacing="0"
+                            alignItems="flex-start"
+                            divider={<StatNumber pr="1">,</StatNumber>}
+                          >
+                            <StatNumber key={activity.id}>
+                              {Utils.roundDistance(
+                                fromMeters(activity.distance)
+                              )}{" "}
+                              {unit.slice(0, 2)}
+                            </StatNumber>
+                          </HStack>
+                        </Stat>
+                      </CardBody>
+                    </Card>
+                  ))}
+                </>
+              )}
             </HStack>
           </Box>
 
@@ -111,6 +133,7 @@ export default function Athlete({ athlete, accessToken }: Props) {
             <>
               <Divider />
               <ActivitySplits
+                key={selectedActivityId}
                 {...{ accessToken, id: selectedActivityId, athlete }}
               />
             </>
