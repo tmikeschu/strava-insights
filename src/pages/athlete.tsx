@@ -10,13 +10,13 @@ import {
   Stat,
   StatLabel,
   StatNumber,
-  LinkOverlay,
-  LinkBox,
+  Divider,
+  VStack,
 } from "@chakra-ui/react";
 import Head from "next/head";
 import React from "react";
-import NextLink from "next/link";
 import { useAuthedHeaderContext } from "@/components/authed-header/authed-header-context";
+import { ActivitySplits } from "@/components";
 
 type Props = {
   athlete: Athlete;
@@ -43,28 +43,44 @@ export default function Athlete({ athlete, accessToken }: Props) {
     )
   );
 
+  const [selectedActivityId, setSelectedActivityId] = React.useState<
+    number | null
+  >(null);
+
   return (
     <>
       <Head>
         <title>Strava Insights | {athlete.username}</title>
       </Head>
       <main>
-        <Box overflowX="hidden" w="full">
-          <HStack py="1" overflowX="auto">
-            <Card flexShrink={0} bg="orange.50">
-              <CardBody>
-                <Stat>
-                  <StatLabel>Last {nDays} days total</StatLabel>
-                  <StatNumber>
-                    {lastNDaysTotal}
-                    {unit.slice(0, 2)}
-                  </StatNumber>
-                </Stat>
-              </CardBody>
-            </Card>
-            {latestActivities.map((activity) => (
-              <LinkBox key={activity.id} flexShrink={0}>
+        <VStack alignItems="flex-start">
+          <Box overflowX="hidden" w="full">
+            <HStack py="1" overflowX="auto">
+              <Card flexShrink={0} bg="orange.50">
+                <CardBody>
+                  <Stat>
+                    <StatLabel>Last {nDays} days total</StatLabel>
+                    <StatNumber>
+                      {lastNDaysTotal}
+                      {unit.slice(0, 2)}
+                    </StatNumber>
+                  </Stat>
+                </CardBody>
+              </Card>
+              {latestActivities.map((activity) => (
                 <Card
+                  role="button"
+                  onClick={() =>
+                    setSelectedActivityId((id) =>
+                      id === activity.id ? null : activity.id
+                    )
+                  }
+                  border="1px solid"
+                  transition="all 0.2s"
+                  {...(selectedActivityId === activity.id
+                    ? { borderColor: "orange.500" }
+                    : { borderColor: "transparent" })}
+                  key={activity.id}
                   flexShrink={0}
                   bg="orange.50"
                   _hover={{ bg: "orange.100" }}
@@ -72,12 +88,7 @@ export default function Athlete({ athlete, accessToken }: Props) {
                   <CardBody>
                     <Stat>
                       <StatLabel>
-                        <LinkOverlay
-                          as={NextLink}
-                          href={`/activities/${activity.id}`}
-                        >
-                          {new Date(activity.start_date_local).toDateString()}
-                        </LinkOverlay>
+                        {new Date(activity.start_date_local).toDateString()}
                       </StatLabel>
                       <HStack
                         spacing="0"
@@ -92,10 +103,19 @@ export default function Athlete({ athlete, accessToken }: Props) {
                     </Stat>
                   </CardBody>
                 </Card>
-              </LinkBox>
-            ))}
-          </HStack>
-        </Box>
+              ))}
+            </HStack>
+          </Box>
+
+          {selectedActivityId && (
+            <>
+              <Divider />
+              <ActivitySplits
+                {...{ accessToken, id: selectedActivityId, athlete }}
+              />
+            </>
+          )}
+        </VStack>
       </main>
     </>
   );
