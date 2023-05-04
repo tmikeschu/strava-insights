@@ -13,6 +13,8 @@ import {
   Divider,
   VStack,
   Skeleton,
+  StatHelpText,
+  Link,
 } from "@chakra-ui/react";
 import Head from "next/head";
 import React from "react";
@@ -120,6 +122,18 @@ export default function Athlete({ athlete, accessToken }: Props) {
                               {unit.slice(0, 2)}
                             </StatNumber>
                           </HStack>
+                          <StatHelpText>
+                            <Link
+                              onClick={(e) => {
+                                e.stopPropagation();
+                              }}
+                              isExternal
+                              textDecor="underline"
+                              href={`https://www.strava.com/activities/${activity.id}`}
+                            >
+                              View on Strava
+                            </Link>
+                          </StatHelpText>
                         </Stat>
                       </CardBody>
                     </Card>

@@ -3,8 +3,6 @@ import { Athlete } from "@/lib/types";
 import { Unit } from "@/lib/utils";
 import {
   Button,
-  Center,
-  Container,
   Divider,
   FormControl,
   FormLabel,
@@ -44,7 +42,7 @@ export const AuthedHeader: React.FC<AuthedHeaderProps> = ({
   accessToken,
 }) => {
   const disclosure = useDisclosure();
-  const [nDays, setNDays] = React.useState(7);
+  const [nDays, setNDays] = React.useState(30);
   const [unit, setUnit] = React.useState<Unit>("miles");
 
   const router = useRouter();
@@ -62,14 +60,19 @@ export const AuthedHeader: React.FC<AuthedHeaderProps> = ({
             <Heading color="orange.500" fontSize={{ base: "xl", md: "3xl" }}>
               Strava Insights
             </Heading>
+            <Text>
+              {athlete.firstname} {athlete.lastname}{" "}
+              {athlete.username ? `(${athlete.username})` : ""}
+            </Text>
+
             <Link
-              color="gray.500"
+              color="orange.500"
               fontWeight="medium"
               fontSize="sm"
               isExternal
               href={`${process.env.NEXT_PUBLIC_STRAVA_URL}/athletes/${athlete.id}`}
             >
-              {athlete.firstname} {athlete.lastname} ({athlete.username})
+              View on Strava
             </Link>
           </VStack>
 
